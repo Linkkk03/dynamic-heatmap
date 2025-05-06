@@ -18,6 +18,34 @@
             background-size: cover;
             border-radius: 50%;
         }
+        /* 弹窗自定义样式 */
+        .amap-info-content {
+            padding: 12px !important;
+            min-width: 280px;
+            border-radius: 8px !important;
+        }
+        .info-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .info-title {
+            font-size: 16px;
+            margin: 6px 0;
+            color: #333;
+        }
+        .info-desc {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+            margin: 8px 0;
+        }
+        .info-weather {
+            color: #1890ff;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -129,13 +157,58 @@
                 marker.setMap(map);
                 marker.on('click', () => {
                     AMap.Popup && AMap.Popup.closeAll();
-                    const popup = new AMap.InfoWindow({
-                        content: `<strong>${loc.name}</strong><br/>类型：${loc.type}`,
-                        offset: new AMap.Pixel(0, -30),
-                    });
-                    popup.open(map, [loc.lng, loc.lat]);
+                    
+                    // 生成天气信息
+                    const weatherData = generateWeather();
+                    
+                    // 生成游玩时间
+                    const playTime = generatePlayTime();
+                    
+                    // 弹窗内容
+                    const popupContent = `
+                        <img src="${loc.photo}" class="info-image" 
+                             onerror="this.src='https://dummyimage.com/280x160/eee/999'">
+                        <div class="info-title">${loc.name}</div>
+                        <div>类型：${loc.type}</div>
+                        <div class="info-desc">${loc.desc}</div>
+                        <div class="info-weather">
+                            ${weatherData.icon} ${weatherData.text} | 温度：${weatherData.temp}℃
+                        </div>
+                        <div>预计游玩：${playTime}</div>
+                    `;
+
+                    new AMap.InfoWindow({
+                        content: popupContent,
+                        offset: new AMap.Pixel(0, -40),
+                        closeWhenClickMap: true
+                    }).open(map, marker.getPosition());
                 });
             });
+        }
+
+        // 生成天气信息
+        function generateWeather() {
+            const weatherList = [
+                { icon: "☀️", text: "晴天（建议防晒）", min: 20, max: 30 },
+                { icon: "⛅", text: "多云（适宜出行）", min: 18, max: 28 },
+                { icon: "🌧️", text: "小雨（记得带伞）", min: 15, max: 25 },
+                { icon: "🌤️", text: "晴转多云", min: 19, max: 27 }
+            ];
+            const weather = weatherList[Math.floor(Math.random() * weatherList.length)];
+            return {
+                icon: weather.icon,
+                text: weather.text,
+                temp: (Math.random() * (weather.max - weather.min) + weather.min).toFixed(1)
+            };
+        }
+
+        // 生成游玩时间
+        function generatePlayTime() {
+            const minutesOptions = [30, 45, 60, 90, 120, 150, 180];
+            const minutes = minutesOptions[Math.floor(Math.random() * minutesOptions.length)];
+            return minutes < 60 ? 
+                `${minutes}分钟` : 
+                `${Math.floor(minutes/60)}小时${minutes%60 ? `${minutes%60}分钟` : ''}`;
         }
 
         function generateHeatmapData() {
